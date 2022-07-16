@@ -1,0 +1,331 @@
+﻿@page "/departments"
+@inject IDepartmentService _service 
+@inject IJSRuntime _jsRuntime
+
+
+<h3>Departments</h3>
+
+<div class="row mb-2">
+    <AuthorizeView Policy="@Policies.IsAdmin">
+        <div class="col-md-8">
+            <button class="btn btn-secondary" type="button" @onclick='@(_ => AddModal("ModalA"))'>
+                <span class="zmdi zmdi-plus zmdi-hc-lg"></span> Add Department
+            </button>
+        </div>
+    </AuthorizeView>
+    
+    
+
+    <div class="form-inline col-md-4 text-md-right">
+
+
+    </div>
+</div>
+
+
+
+<div>
+    @if (departments == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <div class="row pt-md-4">
+            @foreach (var dept in departments)
+            {
+                <div class=" col-sm-6 col-md-4 col-lg-4 pb-3">
+                    <div class="card  rounded-bottom">
+                        <div class="card-title">
+                            <b class="pl-3" style="font-size: 16px;">@dept.Name</b>
+                            <AuthorizeView Policy="@Policies.IsAdmin">
+                                <button class="btn btn-danger btn-sm float-right" type="button" @onclick='@(_ => OpenDeleteModal("deleteConfirmation", dept.Id))'>
+                                    <span class="zmdi zmdi-delete zmdi-hc-lg"></span>
+                                </button>
+                            </AuthorizeView>
+                            
+                        </div>
+
+                        <div class="card-body">
+                            <p class="card-text text-center">@dept.Description</p>
+
+
+                        </div>
+                        <div class="card-footer text-muted">
+                            <AuthorizeView Roles="Admin">
+                                <button class="btn btn-warning btn-sm" type="button" @onclick='@(_ => EditModal("ModalB", dept.Id))'>
+                                    <span class="zmdi zmdi-edit zmdi-hc-lg"></span> Edit
+                                </button>
+                            </AuthorizeView>
+                            
+
+                            <button class="btn btn-info btn-sm float-right" type="button" @onclick='@(_ => EmployeeModal("ModalD", dept.Id))'>
+                                <span class="zmdi zmdi-accounts-alt zmdi-hc-lg"></span> Employee
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            }
+        </div>
+    }
+
+</div>
+
+
+
+<div>
+    <div class="modal fade" id="ModalA" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Department</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="department" OnValidSubmit='_ => AddDepartment("ModalA")'>
+
+                       
+                        <FluentValidationValidator Validator="new DepartmentValidator()" />
+                       
+                        <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Name</label>
+                            <div class="col-sm-9">
+                                <InputText @bind-Value="@department.Name" class="form-control" />
+                                <ValidationMessage For="@(() =>department.Name)" />
+                            </div>
+                        </div>
+
+
+                        <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Description</label>
+                            <div class="col-sm-9">
+                                <InputText @bind-Value="@department.Description" class="form-control" />
+                                <ValidationMessage For="@(() => department.Description)" />
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-3 col-form-label"></label>
+                            <div class="col-sm-9">
+                                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">
+                                    <span class="zmdi zmdi-close zmdi-hc-lg"></span> Close
+                                </button>
+                                &nbsp;&nbsp;
+                                <button type="submit" class="btn btn-sm btn-success ">
+                                    <span class="zmdi zmdi-mail-send zmdi-hc-lg"></span> Save
+                                </button>
+                            </div>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<div>
+    <div class="modal fade" id="ModalB" data-backdrop="static" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit <b>@department.Name</b> </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="department" OnValidSubmit='_ => EditDepartment("ModalB")'>
+
+                        <FluentValidationValidator Validator="new DepartmentValidator()" />
+                        
+                        <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Name</label>
+                            <div class="col-sm-9">
+                                <InputText @bind-Value="@department.Name" class="form-control" />
+                                <ValidationMessage For="@(() =>department.Name)" />
+
+                            </div>
+                        </div>
+
+
+                        <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Description</label>
+                            <div class="col-sm-9">
+                                <InputText @bind-Value="@department.Description" class="form-control" />
+                                <ValidationMessage For="@(() => department.Description)" />
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-3 col-form-label"></label>
+                            <div class="col-sm-9">
+                                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">
+                                    <span class="zmdi zmdi-close zmdi-hc-lg"></span> Close
+                                </button>
+                                &nbsp;&nbsp;
+                                <button type="submit" class="btn btn-sm btn-success ">
+                                    <span class="zmdi zmdi-mail-send zmdi-hc-lg"></span> Save-Edit
+                                </button>
+                            </div>
+                        </div>
+                    </EditForm>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="deleteConfirmation" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Are You Sure You Want To Delete <span class="text-danger">@department.Name</span> ?</h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">
+                    <span class="zmdi zmdi-close zmdi-hc-lg"></span>
+                </button>
+                &nbsp;&nbsp;
+                <button type="button" class="btn btn-sm btn-success" @onclick='@(_ => ConfirmDelete("deleteConfirmation"))'>
+                    <span class="zmdi zmdi-mail-send zmdi-hc-lg"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div>
+    <div class="modal fade" id="ModalD" data-backdrop="static" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Department Employees </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    
+                    @if (departmentEmployee == null)
+                    {
+                        <p><em>Loading...</em></p>
+                    }
+                    else
+                    {
+                        <dl class="row">
+                            <dt class="col-sm-2">
+                                Department
+                            </dt>
+                            <dd class="col-sm-10">
+                                @departmentEmployee.Name
+                            </dd>
+                        </dl>
+
+                        <DepartmentEmployee employees="@departmentEmployee.Employees" />
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm " data-dismiss="modal">
+                        @*<i class="material-icons">reply</i> Close*@
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+    [Parameter] public string DepartmentId { get; set; }
+    [Parameter] public string EmployeeId { get; set; }
+    
+    protected List<DepartmentVm> departments;
+
+    DepartmentVm department = new DepartmentVm();
+
+    public DepartmentEmployeeVm departmentEmployee { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+        departments = await _service.GetDepartments();
+    }
+
+    public async Task AddModal(string modalId)
+    {
+        department = new DepartmentVm();
+        await _jsRuntime.InvokeVoidAsync("global.openModal", modalId);
+    }
+
+    public async Task EditModal(string modalId, string itemId)
+    {
+        department = await _service.GetDepartment(itemId);
+        DepartmentId = itemId;
+        await _jsRuntime.InvokeVoidAsync("global.openModal", modalId);
+    }
+
+
+    public async Task AddDepartment(string modalId)
+    {
+        await _service.CreateDepartment(department);
+        await _jsRuntime.InvokeAsync<object>("global.closeModal", modalId);
+        await OnInitializedAsync();
+
+    }
+
+    public async Task EditDepartment(string modalId)
+    {
+        await _service.UpdateDepartment(department);
+        await _jsRuntime.InvokeAsync<object>("global.closeModal", modalId);
+        await OnInitializedAsync();
+    }
+
+    public async Task CloseModal(string modalId)
+    {
+        await _jsRuntime.InvokeAsync<object>("global.closeModal", modalId);
+    }
+
+    public async Task OpenDeleteModal(string modalId, string itemId)
+    {
+        department = await _service.GetDepartment(itemId);
+        DepartmentId = itemId;
+        await _jsRuntime.InvokeVoidAsync("global.openModal", modalId);
+    }
+    public async Task ConfirmDelete(string modalId)
+    {
+        await _service.DeleteDepartment(DepartmentId);
+        await _jsRuntime.InvokeAsync<object>("global.closeModal", modalId);
+        await OnInitializedAsync();
+    }
+
+    public async Task EmployeeModal(string modalId, string itemId)
+    {
+        if (itemId != null)
+        {
+            departmentEmployee = await _service.GetDepartmentEmployee(itemId);
+            EmployeeId = itemId;
+        }
+        await _jsRuntime.InvokeVoidAsync("global.openModal", modalId);
+    }
+
+
+}

@@ -1,0 +1,384 @@
+﻿@page "/project/list/{Page}"
+@inject IProjectService _projectService
+@inject IEmployeeService  _employeeService
+@inject IJSRuntime _jsRuntime
+
+
+<h3>Projects</h3>
+
+<div class="row mb-2">
+    <div class="col-md-8">
+        <button class="btn btn-secondary" type="button" @onclick='@(_ => AddModal("ModalA"))'>
+            <span class="zmdi zmdi-plus zmdi-hc-lg"></span> Add Project
+        </button>
+    </div>
+
+    <div class="form-inline col-md-4 text-md-right">
+        <div class="form-group">
+            <input type="text" class="form-control" placeholder="Filter by Name" @bind="@SearchTerm" @onkeyup="@SearchBoxKeyPress">
+
+            <button class="btn btn-sm btn-outline-success" @onclick="@SearchClick">
+                <span class="zmdi zmdi-search zmdi-hc-2x"></span>
+            </button>
+            <button class="btn btn-sm btn-outline-warning " @onclick="@ClearSearch">
+                <span class="zmdi zmdi-close zmdi-hc-2x"></span>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+
+
+<div>
+    @if (projects == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <table class="table table-striped table-responsive-xl table-responsive-sm">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Amount</th>
+                    <th>Employee</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in projects.Results)
+                {
+                    <tr>
+                        <td>@item.Name</td>
+                        <td>@item.StartDate.ToString("dd MMM yyyy")</td>
+                        <td>@item.EndDate.ToString("dd MMM yyyy")</td>
+                        <td>@item.Amount.ToString("C")</td>
+                        <td>@item.EmployeeName</td>
+                        
+                        <td>
+
+                            <button class="btn btn-warning btn-sm" type="button" @onclick='@(_ => EditModal("ModalB", item.Id))'>
+                                <span class="zmdi zmdi-edit zmdi-hc-lg"></span> Edit
+                            </button>
+                            |
+                            <AuthorizeView Policy="@Policies.IsAdmin">
+                                <button class="btn btn-danger btn-sm float-right" type="button" @onclick='@(_ => OpenDeleteModal("deleteConfirmation", item.Id))'>
+                                    <span class="zmdi zmdi-delete zmdi-hc-lg"></span>
+                                </button>
+                            </AuthorizeView>
+                           
+                        </td>
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+</div>
+
+
+
+<div>
+    <div class="modal fade" id="ModalA" data-backdrop="static" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Project</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="Project" OnValidSubmit='_ => AddProject("ModalA")'>
+
+                        <FluentValidationValidator Validator="new ProjectValidator()" />
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Project Name</label>
+                            <div class="col-sm-8">
+                                <InputTextArea @bind-Value="@Project.Name" class="form-control" />
+                                <ValidationMessage For="@(() =>Project.Name)" />
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Start Date</label>
+                            <div class="col-sm-8">
+                                <DateTimePicker @bind-Value="@Project.StartDate" Mode="DateTimePickerMode.Date" />
+                                <ValidationMessage For="@(() =>Project.StartDate)" />
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Amount</label>
+                            <div class="col-sm-8">
+                                <InputNumber @bind-Value="@Project.Amount" class="form-control" />
+                                <ValidationMessage For="@(() =>Project.Amount)" />
+                            </div>
+                        </div>
+
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">End Date</label>
+                            <div class="col-sm-8">
+                                <DateTimePicker @bind-Value="@Project.EndDate" Mode="DateTimePickerMode.Date" />
+                                <ValidationMessage For="@(() =>Project.EndDate)" />
+                            </div>
+                        </div>
+
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Employee</label>
+                            <div class="col-sm-8">
+                                <InputSelect @bind-Value="Project.EmployeeId" class="custom-select form-control">
+                                    <option>Select Employee</option>
+                                    @foreach (var dept in Employees)
+                                    {
+                                        <option value="@dept.Id">@dept.LastName &nbsp; @dept.FirstName</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+                        
+                        
+                       <div class="form-group row">
+                            <label class="col-sm-4 col-form-label"></label>
+                            <div class="col-sm-8">
+                                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">
+                                    <span class="zmdi zmdi-close zmdi-hc-lg"></span> Close
+                                </button>
+                                &nbsp;&nbsp;
+                                <button type="submit" class="btn btn-sm btn-success ">
+                                    <span class="zmdi zmdi-mail-send zmdi-hc-lg"></span> Save
+                                </button>
+                            </div>
+                        </div>
+                    </EditForm>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div>
+    <div class="modal fade" id="ModalB" data-backdrop="static" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Project</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="Project" OnValidSubmit='_ => EditProject("ModalB")'>
+
+                        <FluentValidationValidator Validator="new ProjectValidator()" />
+
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Project Name</label>
+                            <div class="col-sm-8">
+                                <InputTextArea @bind-Value="@Project.Name" class="form-control" />
+                                <ValidationMessage For="@(() =>Project.Name)" />
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Start Date</label>
+                            <div class="col-sm-8">
+                                <DateTimePicker @bind-Value="@Project.StartDate" Mode="DateTimePickerMode.Date" />
+                                <ValidationMessage For="@(() =>Project.StartDate)" />
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Amount</label>
+                            <div class="col-sm-8">
+                                <InputNumber @bind-Value="@Project.Amount" class="form-control" />
+                                <ValidationMessage For="@(() =>Project.Amount)" />
+                            </div>
+                        </div>
+
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">End Date</label>
+                            <div class="col-sm-8">
+                                <DateTimePicker @bind-Value="@Project.EndDate" Mode="DateTimePickerMode.Date" />
+                                <ValidationMessage For="@(() =>Project.EndDate)" />
+                            </div>
+                        </div>
+
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Employee</label>
+                            <div class="col-sm-8">
+                                <InputSelect @bind-Value="Project.EmployeeId" class="custom-select form-control">
+                                    <option>Select Employee</option>
+                                    @foreach (var dept in Employees)
+                                    {
+                                        <option value="@dept.Id">@dept.LastName &nbsp; @dept.FirstName</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+                        
+                       
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label"></label>
+                            <div class="col-sm-8">
+                                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">
+                                    <span class="zmdi zmdi-close zmdi-hc-lg"></span> Close
+                                </button>
+                                &nbsp;&nbsp;
+                                <button type="submit" class="btn btn-sm btn-success ">
+                                    <span class="zmdi zmdi-mail-send zmdi-hc-lg"></span> Save-Edit
+                                </button>
+                            </div>
+                        </div>
+
+
+                    </EditForm>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="deleteConfirmation" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Are You Sure You Want To Delete ?</h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">
+                    <span class="zmdi zmdi-close zmdi-hc-lg"></span>
+                </button>
+                &nbsp;&nbsp;
+                <button type="button" class="btn btn-sm btn-success" @onclick='@(_ => ConfirmDelete("deleteConfirmation"))'>
+                    <span class="zmdi zmdi-mail-send zmdi-hc-lg"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+@code {
+
+    [Parameter] public string Page { get; set; } = "1";
+    [Parameter] public string SearchTerm { get; set; } = string.Empty;
+    [Parameter] public string ProjectId { get; set; }
+
+    protected PagedResult<ProjectVm> projects;
+
+    public ProjectVm Project = new ProjectVm();
+    public List<EmployeeListVm> Employees { get; set; } = new List<EmployeeListVm>();
+   
+
+    protected override async Task OnParametersSetAsync()
+    {
+        projects = await _projectService.GetProjects(SearchTerm , Page);
+
+    }
+
+    protected async Task SearchBoxKeyPress(KeyboardEventArgs ev)
+    {
+        if (ev.Key == "Enter")
+        {
+            await SearchClick();
+        }
+    }
+
+    protected async Task SearchClick()
+    {
+        if (string.IsNullOrEmpty(SearchTerm))
+        {
+            projects = await _projectService.GetProjects(SearchTerm, Page);
+            return;
+        }
+
+        projects = await _projectService.GetProjects(SearchTerm, Page);
+        StateHasChanged();
+    }
+
+    protected async Task ClearSearch()
+    {
+        SearchTerm = string.Empty;
+        projects = await _projectService.GetProjects(SearchTerm, Page);
+        StateHasChanged();
+    }
+
+
+    public async Task AddModal(string modalId)
+    {
+        Project = new ProjectVm();
+        Employees = await _employeeService.ListEmployees();
+       
+        await _jsRuntime.InvokeVoidAsync("global.openModal", modalId);
+    }
+
+    public async Task EditModal(string modalId, string itemId)
+    {
+        Project = await _projectService.GetProject(itemId);
+        ProjectId = itemId;
+
+        Employees = await _employeeService.ListEmployees();
+        
+        await _jsRuntime.InvokeVoidAsync("global.openModal", modalId);
+    }
+
+
+
+    public async Task AddProject(string modalId)
+    {
+        await _projectService.CreateProject( Project);
+        await _jsRuntime.InvokeAsync<object>("global.closeModal", modalId);
+        await OnParametersSetAsync();
+    }
+
+    public async Task EditProject(string modalId)
+    {
+        await _projectService.UpdateProject( Project);
+        await _jsRuntime.InvokeAsync<object>("global.closeModal", modalId);
+        await OnParametersSetAsync();
+    }
+
+    public async Task CloseModal(string modalId)
+    {
+        await _jsRuntime.InvokeAsync<object>("global.closeModal", modalId);
+    }
+
+
+    public async Task OpenDeleteModal(string modalId, string itemId)
+    {
+        Project = await _projectService.GetProject(itemId);
+        ProjectId = itemId;
+        await _jsRuntime.InvokeVoidAsync("global.openModal", modalId);
+    }
+
+    public async Task ConfirmDelete(string modalId)
+    {
+        await _projectService.DeleteProject(ProjectId);
+        await _jsRuntime.InvokeAsync<object>("global.closeModal", modalId);
+        await OnParametersSetAsync();
+    }
+
+
+}

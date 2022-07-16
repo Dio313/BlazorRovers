@@ -1,0 +1,72 @@
+﻿@page "/authentication/login"
+@inject IAuthService _service
+@inject NavigationManager _navigationManager
+@inject AuthenticationStateProvider _stateProvider
+
+
+
+<div class="row justify-content-md-center">
+    <div class="col-md-5 mt-4 shadow p-3 mb-4 bg-white rounded">
+       
+        <h2 class="text-center">Login</h2>
+        
+        @if (ShowErrors) {
+            <div class="alert alert-danger" role="alert">
+                <p>@Error</p>
+            </div>
+        }
+
+        <EditForm Model="loginModel" OnValidSubmit="ExecuteLogin" class="card card-body bg-light mt-5">
+            
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+           
+            <div class="form-group">
+                <label for="username">Username</label>
+                <InputText @bind-Value="loginModel.Username" id="username" class="form-control form-control-sm" type="text" />
+                <ValidationMessage For="@(() =>loginModel.Username)" />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <InputText @bind-Value="loginModel.Password" id="password" class="form-control form-control-sm" type="password" />
+                <ValidationMessage For="@(() =>loginModel.Password)" />
+            </div>
+
+            <hr />
+            
+            <button type="submit" class="btn btn-success btn-block mr-2">LOGIN</button>
+        </EditForm>
+        <hr />
+        
+   
+
+    </div>
+</div>
+
+
+
+@code {
+
+    private readonly LoginVm loginModel = new();
+    private bool ShowErrors;
+    private string Error = "";
+
+
+
+    private async Task ExecuteLogin()
+    {
+        ShowErrors = false;
+
+        var result = await _service.Login(loginModel);
+
+        if (result.Successful) {
+           _navigationManager.NavigateTo("/");
+        } else {
+            Error = result.Error;
+            ShowErrors = true;
+        }
+
+    }
+
+}

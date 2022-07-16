@@ -1,0 +1,34 @@
+﻿
+
+    <table class="table">
+        <thead class="thead-light">
+            <tr>
+                <th>FirstName</th>
+                <th>LastName</th>
+                <th>EmployeeNumber</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var item in employees)
+        {
+            <tr>
+                <td>
+                    @item.FirstName
+                </td>
+                <td>
+                    @item.LastName
+                </td>
+                <td>
+                    @item.EmployeeNumber
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+
+@code {
+
+    [Parameter] public List<EmployeeListVm> employees{ get; set; }
+
+}

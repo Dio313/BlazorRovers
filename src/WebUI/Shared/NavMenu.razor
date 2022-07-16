@@ -1,0 +1,80 @@
+﻿<header>
+    <nav class="navbar navbar-expand-lg  fixed-top navbar-dark bg-primary">
+        <div class=" container">
+            <a class="navbar-brand" href="">Blazor Rovers</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse"
+                    aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse bg-primary @NavMenuCssClass" id="navbarCollapse" @onclick="ToggleNavMenu">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <NavLink class="nav-link text-white" href="" Match="NavLinkMatch.All"> Home</NavLink>
+                    </li>
+                    <AuthorizeView Policy="@Policies.IsAdmin">
+                        <Authorized>
+                            <li class="nav-item">
+                                <NavLink class="nav-link text-white" href="employee/list/1"> Employee</NavLink>
+                            </li>
+                        </Authorized>
+                    </AuthorizeView>
+
+
+                    <AuthorizeView>
+                        <Authorized>
+                            <li class="nav-item">
+                                <NavLink class="nav-link text-white" href="departments"> Department</NavLink>
+                            </li>
+
+                            <li class="nav-item">
+                                <NavLink class="nav-link text-white" href="project/list/1"> Projects</NavLink>
+                            </li>
+                        </Authorized>
+                    </AuthorizeView>
+                    
+                    <AuthorizeView Policy="@Policies.IsAdmin">
+                        <Authorized>
+                            <li class="nav-item">
+                                <NavLink class="nav-link text-white" href="roles/index"> Roles</NavLink>
+                            </li>
+                        </Authorized>
+                    </AuthorizeView>
+                    
+                    
+                    
+                    <AuthorizeView>
+                        <Authorized>
+                            <span style="color: greenyellow; padding-top: 8px;">Hi
+                                @if (context.User.Identity != null)
+                                {
+                                    @context.User.Identity.Name
+                                }
+                            </span>
+                            <NavLink href="authentication/logout" class="nav-link text-white">Log out</NavLink>
+                            <NavLink href="authentication/ChangePassword" class="nav-link text-white">Reset Password</NavLink>
+                        </Authorized>
+                        <NotAuthorized>
+                            <NavLink class="nav-link text-white" href="authentication/login">Login </NavLink>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </ul>
+
+            </div>
+        </div>
+
+    </nav>
+
+</header>
+
+
+@code
+{
+    private bool collapseNavMenu = true;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

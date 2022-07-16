@@ -1,0 +1,47 @@
+﻿@page "/roles/index"
+@inject IRoleService _service 
+@attribute [Authorize(Policy = Policies.IsAdmin)]
+
+
+<h3>Employee Roles</h3>
+
+<div>
+    @if (users == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <table class="table table-striped table-responsive-xl table-responsive-sm">
+            <thead>
+            <tr>
+                <th></th>
+                <th>Employee</th>
+                
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in users)
+            {
+                <tr>
+                    <td> <a href="/users/edit/@item.Id" class="btn btn-success">Edit</a></td>
+                    <td>@item.LastName &nbsp; @item.FirstName &nbsp; @item.EmployeeNumber</td>
+              
+
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+
+</div>
+
+@code {
+
+    protected List<EmployeeListVm> users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await _service.ListUsers();
+    }
+}
